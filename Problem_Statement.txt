@@ -1,0 +1,52 @@
+PROBLEM STATEMENT – Solving Inventory Inefficiencies Using SQL
+
+Urban Retail Co. is a rapidly growing retail chain operating across multiple cities through both physical stores and online platforms. With over 5,000 diverse SKUs—including groceries, home essentials, electronics, and personal care items—the company relies on regional warehouses to supply inventory to its stores.
+
+However, the business is facing major challenges in inventory management due to underutilized data, manual decision-making, and a lack of integrated analytics. These issues have led to:
+
+> Frequent stockouts of high-demand items, hurting customer experience and sales
+> Overstocking of slow-moving products, increasing storage costs and tying up capital
+> No real-time visibility into SKU performance or supplier reliability
+> Inefficient inventory planning across categories, stores, and regions
+
+OBJECTIVE
+
+To address these inefficiencies, Urban Retail Co. aims to implement a **SQL-driven inventory monitoring and optimization solution**. This project simulates the work of data analysts in a real-world retail setting by:
+
+> Writing scalable and optimized SQL queries for data extraction and analysis
+> Detecting inventory gaps, estimating reorder points, and evaluating supplier performance
+> Generating actionable insights through KPIs, trend analysis, and reports
+
+EXPECTED DELIVERABLES
+
+1. SQL Scripts to:
+   > Calculate current stock levels
+   > Detect low inventory based on reorder points
+   > Estimate reorder points using sales trends
+   > Analyze inventory turnover
+   > Generate KPI summary reports
+
+2. Database Design:
+   > Normalize raw datasets into a relational schema
+   > Apply indexing and performance best practices
+
+3. Analytical Outputs:
+   > Identify fast-moving and slow-moving products
+   > Recommend stock adjustments
+   > Forecast seasonal/cyclical demand
+   > Evaluate supplier performance inconsistencies
+
+4. Final Submission Includes:
+   > SQL scripts and documentation
+   > Entity Relationship Diagram (ERD)
+   > Inventory KPI dashboard (real or mock)
+   > Executive summary (1–2 pages)
+
+BUSINESS IMPACT
+
+By the end of this project, the solution will help Urban Retail Co.:
+> Make data-driven inventory decisions
+> Reduce both stockouts and overstock
+> Improve supply chain visibility and efficiency
+> Enhance customer satisfaction and overall profitability
+
