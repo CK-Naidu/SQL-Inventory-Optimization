@@ -1,6 +1,6 @@
 -- =============================================
 --  Urban Retail Co. Inventory Analytics Project
---  SQL Script for Schema + Analysis Queries
+--  Final SQL Script with Schema, ETL, and KPI Queries
 -- =============================================
 
 -- Create Schema
@@ -53,10 +53,56 @@ CREATE TABLE InventoryTransactions (
 );
 
 -- =====================
--- Analytics Queries
+-- ETL: Populate Normalized Tables
 -- =====================
 
--- 1. Stock Level by Store and Region
+-- Insert Regions
+INSERT IGNORE INTO Regions (RegionName)
+SELECT DISTINCT Region FROM inventory_forecasting_raw;
+
+-- Insert Stores
+INSERT IGNORE INTO Stores (StoreID, RegionID)
+SELECT DISTINCT `Store ID`,
+    (SELECT RegionID FROM Regions WHERE RegionName = r.Region)
+FROM inventory_forecasting_raw r;
+
+-- Insert Categories
+INSERT IGNORE INTO Categories (CategoryName)
+SELECT DISTINCT Category FROM inventory_forecasting_raw;
+
+-- Insert Products
+INSERT IGNORE INTO Products (ProductID, CategoryID)
+SELECT DISTINCT `Product ID`,
+    (SELECT CategoryID FROM Categories WHERE CategoryName = r.Category)
+FROM inventory_forecasting_raw r;
+
+-- Insert Inventory Transactions
+INSERT INTO InventoryTransactions (
+    Date, StoreID, ProductID, InventoryLevel, UnitsSold, UnitsOrdered,
+    DemandForecast, Price, Discount, WeatherCondition, HolidayPromotion,
+    CompetitorPricing, Seasonality
+)
+SELECT 
+    STR_TO_DATE(Date, '%Y-%m-%d'),
+    `Store ID`,
+    `Product ID`,
+    `Inventory Level`,
+    `Units Sold`,
+    `Units Ordered`,
+    `Demand Forecast`,
+    Price,
+    Discount,
+    `Weather Condition`,
+    `Holiday/Promotion`,
+    `Competitor Pricing`,
+    Seasonality
+FROM inventory_forecasting_raw;
+
+-- =====================
+-- KPI / Analytics Queries
+-- =====================
+
+-- 1. Total & Avg Inventory by Store and Region
 SELECT 
     s.StoreID,
     r.RegionName,
@@ -67,7 +113,7 @@ JOIN Stores s ON it.StoreID = s.StoreID
 JOIN Regions r ON s.RegionID = r.RegionID
 GROUP BY s.StoreID, r.RegionName;
 
--- 2. Reorder Point Detection (1.5 * Avg Daily Sales)
+-- 2. Reorder Point Detection (Demo: 3.0x Threshold)
 WITH AvgSales AS (
     SELECT 
         ProductID,
@@ -80,13 +126,14 @@ SELECT
     it.ProductID,
     it.StoreID,
     MAX(it.InventoryLevel) AS CurrentInventory,
-    ROUND(AvgSales.AvgDailySales * 1.5, 2) AS ReorderPoint
+    ROUND(AvgSales.AvgDailySales * 3.0, 2) AS ReorderPoint
 FROM InventoryTransactions it
 JOIN AvgSales ON it.ProductID = AvgSales.ProductID AND it.StoreID = AvgSales.StoreID
 GROUP BY it.ProductID, it.StoreID, AvgSales.AvgDailySales
-HAVING MAX(it.InventoryLevel) < (AvgSales.AvgDailySales * 1.5);
+HAVING MAX(it.InventoryLevel) < (AvgSales.AvgDailySales * 3.0)
+ORDER BY ReorderPoint DESC;
 
--- 3. Stockout Rate (% of Days Inventory = 0)
+-- 3. Stockout Rate (Days Inventory = 0)
 SELECT 
     ProductID,
     StoreID,
@@ -95,7 +142,7 @@ FROM InventoryTransactions
 GROUP BY ProductID, StoreID
 ORDER BY StockoutRatePercent DESC;
 
--- 4. Inventory Turnover (Total Sold / Avg Inventory)
+-- 4. Inventory Turnover Rate
 WITH AvgInventory AS (
     SELECT 
         ProductID,
@@ -136,3 +183,40 @@ JOIN Products p ON it.ProductID = p.ProductID
 JOIN Categories c ON p.CategoryID = c.CategoryID
 GROUP BY p.ProductID, c.CategoryName
 ORDER BY TotalUnitsSold DESC;
+
+-- 6. Overstocked & Slow-Moving Products
+SELECT 
+    ProductID,
+    StoreID,
+    AVG(InventoryLevel) AS AvgInventory,
+    SUM(UnitsSold) AS TotalUnitsSold
+FROM InventoryTransactions
+GROUP BY ProductID, StoreID
+HAVING AvgInventory > 100 AND TotalUnitsSold < 500;
+
+-- 7. Weather Impact on Sales
+SELECT 
+    WeatherCondition,
+    AVG(UnitsSold) AS AvgUnitsSold
+FROM InventoryTransactions
+GROUP BY WeatherCondition;
+
+-- 8. Demand Forecast vs Actual Sales Accuracy
+SELECT 
+    ProductID,
+    StoreID,
+    ROUND(AVG(DemandForecast), 2) AS AvgForecast,
+    ROUND(AVG(UnitsSold), 2) AS AvgSold,
+    ROUND(AVG(UnitsSold) - AVG(DemandForecast), 2) AS ForecastAccuracy
+FROM InventoryTransactions
+GROUP BY ProductID, StoreID
+ORDER BY ForecastAccuracy DESC;
+
+-- 9. Inventory Age Proxy: Days with Low Sales (< 5)
+SELECT 
+    ProductID,
+    StoreID,
+    COUNT(*) AS TotalDays,
+    SUM(CASE WHEN UnitsSold < 5 THEN 1 ELSE 0 END) AS LowSalesDays
+FROM InventoryTransactions
+GROUP BY ProductID, StoreID;
