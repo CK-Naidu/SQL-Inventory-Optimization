@@ -1,3 +1,9 @@
+-- =====================
+-- Group members
+-- Kandi Chenna Kesava Naidu
+-- Sivvala Harish
+-- Adabala Abhiram
+-- =====================
 -- =============================================
 --  Urban Retail Co. Inventory Analytics Project
 --  Final SQL Script with Schema, ETL, and KPI Queries
